@@ -3,6 +3,8 @@
 %  Instructor: L. Fichera, <loris@wpi.edu>
 close all; clear, clc
 
+addpath('utils');
+
 %% Initialize the model of the robot
 % Screw Axes:
 S = [0 0 1  0     0 0;
