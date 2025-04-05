@@ -29,7 +29,9 @@ within_bounds = 0;
 for ii = 1 : nPts
     q0 = zeros(1,6);
     targetPose = V(:,ii);
-    q(ii,:) = ikin(S,M,q0,targetPose);
+    %q(ii,:) = ikin(S,M,q0,targetPose);
+    FABRIK(targetPose(1:3), [0.32, 0.215, 0.035, 0.77, 0.035])
+    q(ii,:) = FABRIK(targetPose(1:3), [0.32, 0.215, 0.035, 0.77, 0.035]);
 
     T = fkine(S, M, q(ii, :), 'space');
     pose = MatrixLog6(T);
