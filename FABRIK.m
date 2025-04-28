@@ -1,43 +1,74 @@
-function p = FABRIK(pTarget, jointDistances)
+% Single Iteration of the FABRIK algorithm
+function p = FABRIK(currPos, targetPos, jointDistances)
     % 3D FABRIK (Forward and Backward Reaching Inverse Kinematics) algorithm
-    % pTarget: target position in 3D space
-    % jointDistances: distances between joints
+    % currPos: Current position of the each joint (nx3 vector)
+    % targetPos: Target position of the end effector (1x3 vector)
+    % jointDistances: Distances between joints (nx1 vector)
     % Returns the joint angles that achieve the target position
+    
     % Initialize variables
-    numJoints = length(jointDistances);
-    p = zeros(numJoints, 3); % Initialize joint positions
-    p(1, :) = [0, 0, 0]; % Start at the origin
-    p(numJoints, :) = pTarget; % Set the end effector position to the target
+    numJoints = length(currPos);
 
-    % Forward reaching phase
-    for i = numJoints-1:-1:1
-        % Calculate the direction from the current joint to the next joint
-        direction = p(i+1, :) - p(i, :);
-        % Normalize the direction vector
-        direction = direction / norm(direction);
-        % Update the position of the current joint
-        p(i, :) = p(i+1, :) - direction * jointDistances(i);
+    % Distance between root and target
+    rootTargetDist = norm(currPos(1, :) - targetPos);
+
+    % Check whether target is within reach
+    if(rootTargetDist > sum(jointDistances))
+        % The target is unreachable
+        for i = 1:numJoints - 1
+            % Find distance between target and joint
+            r = norm(targetPos - currPos(i, :));
+
+            lambda = jointDistances(i) / r;
+
+            % New joint position update
+            currPos(i + 1, :) = (1 - lambda) * currPos(i, :) + lambda * targetPos;
+        end
+   
+   
+    else
+        % The target is reachable
+        b = currPos(1, :);
+
+        % Check distance between end effector and target
+        % is greater than some tolerance
+        diff = norm(currPos(numJoints, :) - targetPos);
+
+        tol = 1e-3;
+        while diff > tol
+            % STAGE 1: FORWARD REACHING STAGE
+
+            % Set end effector as target
+            currPos(numJoints, :) = targetPos;
+
+            for i = numJoints - 1:-1:1
+                % Get distance r between new joint position and current joint
+                r = norm(currPos(i + 1, :) - currPos(i, :));
+                lambda = jointDistances(i) / r;
+                
+                % Find new joint position
+                currPos(i, :) = (1 - lambda) * currPos(i + 1, :) + lambda * currPos(i, :);
+            end
+
+
+            % STAGE 2: BACKWARD REACHING STAGE
+
+            % Set root as initial position (using temp variable)
+            currPos(1, :) = b;
+
+            for i = 1:numJoints - 1
+                r = norm(currPos(i + 1, :) - currPos(i, :));
+                lambda = jointDistances(i) / r;
+
+                % Find new joint position
+                currPos(i + 1, :) = (1 - lambda) * currPos(i, :) + lambda * currPos(i + 1, :);
+            end
+
+            % Update the distance to check
+            diff = norm(currPos(numJoints, :) - targetPos);
+        end
     end
-    % Backward reaching phase
-    for i = 2:numJoints
-        % Calculate the direction from the current joint to the previous joint
-        direction = p(i-1, :) - p(i, :);
-        % Normalize the direction vector
-        direction = direction / norm(direction);
-        % Update the position of the current joint
-        p(i, :) = p(i-1, :) + direction * jointDistances(i-1);
-    end
-    % Calculate the final joint angles based on the positions
-    jointAngles = zeros(numJoints, 1);
-    for i = 1:numJoints-1
-        % Calculate the angle between the current joint and the next joint
-        direction = p(i+1, :) - p(i, :);
-        % Normalize the direction vector
-        direction = direction / norm(direction);
-        % Calculate the angle using the dot product
-        jointAngles(i) = acos(dot([1, 0, 0], direction));
-    end
-    % Return the joint angles
-    p = jointAngles;
+
+    % Return the new positions
+    p = currPos;
 end
-

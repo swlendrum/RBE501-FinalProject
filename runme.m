@@ -20,26 +20,51 @@ M = [R p; 0 0 0 1];
 %% Load the test configurations
 load target_poses.mat
 nPts = length(V);
+numJoints = 3;
 
-%% Calculate the IK
+%% Calculate the IKs
 % Initialize a matrix to store the IK solutions
-q = zeros(nPts,6);
-within_bounds = 0;
+q = zeros(nPts, numJoints);
 
+nPts = 100;
+fprintf('Generating task space path... ');
+phi = linspace(0, 4*pi, nPts);
+r = linspace(0, 0.3, nPts) ;
+x = r .* cos(phi) + 0.4;
+y = r  .* sin(phi);
+z = 0.2 * ones(1,nPts);
+path = [x; y; z];
+fprintf('Done.\n');
+
+% Get the home position of the robot
+currentPose = M(1:3,4);
+
+% Set the current joint variables/distances
+currentQ = zeros(1,numJoints);
+jointDistances = zeros(numJoints, 1);
+
+% Loop over all the points
 for ii = 1 : nPts
-    q0 = zeros(1,6);
-    targetPose = V(:,ii);
-    %q(ii,:) = ikin(S,M,q0,targetPose);
-    FABRIK(targetPose(1:3), [0.32, 0.215, 0.035, 0.77, 0.035])
-    q(ii,:) = FABRIK(targetPose(1:3), [0.32, 0.215, 0.035, 0.77, 0.035]);
+    % Generate the robot's pose
+    targetPose = path(:, ii);
 
-    T = fkine(S, M, q(ii, :), 'space');
-    pose = MatrixLog6(T);
-    pose = debracket(pose);
-
-    if norm(targetPose - pose) < 1e-6
-        within_bounds = within_bounds + 1;
+    % Initialize joint positions
+    jointPositions = zeros(numJoints, 3);
+    for j = 2:numJoints
+        jointPositions(j,:) = jointPositions(j-1,:) + [jointDistances(j-1), 0, 0];
     end
-end
+    currentPose = jointPositions(end,:)';
 
-disp("# Converged: " + within_bounds)
+    % Inverse Kinematics
+    while norm(targetPose - currentPose) > 1e-3
+        % Perform FABRIK
+        jointPositions = FABRIK_r(jointPositions, targetPose, jointDistances);
+
+        % % Original
+        % jointPositions = ikin(S, M, jointPositions, targetPose);
+        % 
+        % Update current pose
+        currentPose = jointPositions(end,:)';
+    end
+    q(ii,:) = jointPositions(:,1);
+end
