@@ -10,15 +10,33 @@ N_links = length(link_lengths);
 N_points = N_links + 1;
 
 %% Generate the task-space spiral path
-nPts = 100;
-fprintf('Generating task space path... ');
-phi = linspace(0, 4*pi, nPts);
-r = linspace(0, 0.3, nPts);
-x = r .* cos(phi) + 0.4;
-y = r .* sin(phi);
-z = 0.2 * ones(1, nPts); % Flat spiral at constant height
-path = [x; y; z];
-fprintf('Done.\n');
+% nPts = 100;
+% fprintf('Generating task space path... ');
+% phi = linspace(0, 4*pi, nPts);
+% r = linspace(0, 0.3, nPts);
+% x = r .* cos(phi) + 0.4;
+% y = r .* sin(phi);
+% z = 0.2 * ones(1, nPts); % Flat spiral at constant height
+% path = [x; y; z];
+% fprintf('Done.\n');
+
+path = [0    0.3   0.15;
+        0.25 0     0.1;
+        0.25 0.25  0.2]';
+
+% Define the number of points to interpolate between the 3 given points
+numInterp = 50;
+
+% Interpolate between each pair of points
+t = 1:3; % original points' indices
+tq = linspace(1, 3, numInterp * 2 + 1); % create a finer set of points
+
+% Interpolate
+interpPath = interp1(t, path, tq, 'linear')';
+
+% Rename path to interpPath in the end
+path = interpPath;
+nPts = length(path);
 
 %% Plot the spiral task-space path
 figure;
