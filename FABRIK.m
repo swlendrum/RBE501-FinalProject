@@ -32,12 +32,12 @@ for iter = 1:max_iter
     %% Check convergence
     err = norm(joint_positions(end,:) - target);
     if err < tol
-        fprintf('Converged in %d iterations with error %.6f\n', iter, err);
+        % fprintf('Converged in %d iterations with error %.6f\n', iter, err);
         iterations = iter;
         return;
     end
 end
 
-fprintf('Max iterations reached with error %.6f\n', err);
+% fprintf('Max iterations reached with error %.6f\n', err);
 iterations = max_iter;
 end
