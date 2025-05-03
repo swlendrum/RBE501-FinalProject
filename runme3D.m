@@ -58,7 +58,7 @@ for ii = 1:nPts
 
     target_pos = path(:,ii)';
     
-    joint_positions_new = FABRIK_r(joint_positions, link_lengths, target_pos, 1e-3, 5000);
+    joint_positions_new = FABRIK_R(joint_positions, link_lengths, target_pos, 1e-3, 5000);
     
     solutions{ii} = joint_positions_new;
     joint_angles{ii} = extract_joint_angles(joint_positions_new, joint_axes);

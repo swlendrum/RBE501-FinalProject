@@ -1,74 +1,41 @@
-% Single Iteration of the FABRIK algorithm
-function p = FABRIK(currPos, targetPos, jointDistances)
-    % 3D FABRIK (Forward and Backward Reaching Inverse Kinematics) algorithm
-    % currPos: Current position of the each joint (nx3 vector)
-    % targetPos: Target position of the end effector (1x3 vector)
-    % jointDistances: Distances between joints (nx1 vector)
-    % Returns the joint angles that achieve the target position
-    
-    % Initialize variables
-    numJoints = length(currPos);
+function joint_positions = FABRIK(joint_positions, link_lengths, target, tol, max_iter)
+% FABRIK for planar manipulators (all links rotate in XZ plane about Y axis)
+% Input joint_positions: Nx3 initial guess
+% Output: updated joint_positions in XZ plane
 
-    % Distance between root and target
-    rootTargetDist = norm(currPos(1, :) - targetPos);
+N = size(joint_positions, 1);
 
-    % Check whether target is within reach
-    if(rootTargetDist > sum(jointDistances))
-        % The target is unreachable
-        for i = 1:numJoints - 1
-            % Find distance between target and joint
-            r = norm(targetPos - currPos(i, :));
+% Project everything to XZ plane
+target = [target(1), 0, target(3)];
 
-            lambda = jointDistances(i) / r;
+for iter = 1:max_iter
+    %% Step 1: Forward reaching
+    joint_positions(end,:) = target;
 
-            % New joint position update
-            currPos(i + 1, :) = (1 - lambda) * currPos(i, :) + lambda * targetPos;
-        end
-   
-   
-    else
-        % The target is reachable
-        b = currPos(1, :);
-
-        % Check distance between end effector and target
-        % is greater than some tolerance
-        diff = norm(currPos(numJoints, :) - targetPos);
-
-        tol = 1e-3;
-        while diff > tol
-            % STAGE 1: FORWARD REACHING STAGE
-
-            % Set end effector as target
-            currPos(numJoints, :) = targetPos;
-
-            for i = numJoints - 1:-1:1
-                % Get distance r between new joint position and current joint
-                r = norm(currPos(i + 1, :) - currPos(i, :));
-                lambda = jointDistances(i) / r;
-                
-                % Find new joint position
-                currPos(i, :) = (1 - lambda) * currPos(i + 1, :) + lambda * currPos(i, :);
-            end
-
-
-            % STAGE 2: BACKWARD REACHING STAGE
-
-            % Set root as initial position (using temp variable)
-            currPos(1, :) = b;
-
-            for i = 1:numJoints - 1
-                r = norm(currPos(i + 1, :) - currPos(i, :));
-                lambda = jointDistances(i) / r;
-
-                % Find new joint position
-                currPos(i + 1, :) = (1 - lambda) * currPos(i, :) + lambda * currPos(i + 1, :);
-            end
-
-            % Update the distance to check
-            diff = norm(currPos(numJoints, :) - targetPos);
-        end
+    for i = N-1:-1:1
+        r = joint_positions(i+1,:) - joint_positions(i,:);
+        r(2) = 0; % Remove Y component
+        r = r / (norm(r) + eps);
+        joint_positions(i,:) = joint_positions(i+1,:) - link_lengths(i) * r;
     end
 
-    % Return the new positions
-    p = currPos;
+    %% Step 2: Backward reaching
+    joint_positions(1,:) = [0, 0, 0];  % Base fixed
+
+    for i = 2:N
+        r = joint_positions(i,:) - joint_positions(i-1,:);
+        r(2) = 0;  % Remove Y component
+        r = r / (norm(r) + eps);
+        joint_positions(i,:) = joint_positions(i-1,:) + link_lengths(i-1) * r;
+    end
+
+    %% Check convergence
+    err = norm(joint_positions(end,:) - target);
+    if err < tol
+        fprintf('Converged in %d iterations with error %.6f\n', iter, err);
+        return;
+    end
+end
+
+fprintf('Max iterations reached with error %.6f\n', err);
 end

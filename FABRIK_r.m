@@ -1,4 +1,4 @@
-function joint_positions = FABRIK_r(joint_positions, link_lengths, target, tol, max_iter)
+function joint_positions = FABRIK_R(joint_positions, link_lengths, target, tol, max_iter)
 % FABRIK with moving frame plane constraints
 % Real robot version
 
