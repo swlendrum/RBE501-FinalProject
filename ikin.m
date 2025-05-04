@@ -1,27 +1,5 @@
 function q = ikin(S, M, currentQ, targetPose)
-    function pose = debracket(twist)
-        pose = [twist(3,2) twist(1,3) twist(2,1) twist(1:3,4)']';
-    end
     
-    function J_a = jacoba(S,M,q,frame)
-        J_s = jacob0(S, q);
-    
-        Jw = J_s(1:3, :);
-        Jv = J_s(4:6, :);
-        
-        T_s = fkine(S,M,q,'space');
-        p = T_s(1:3, 4);
-        
-        J_a = Jv - skew(p) * Jw;
-    end
-
-    function S = skew(w)
-    
-        S = [ 0    -w(3)   w(2);
-              w(3)   0    -w(1);
-             -w(2)   w(1)   0 ];
-    end
-
     qlim = [-180.0 180.0;
             -125.0 125.0;
             -138.0 138.0;
