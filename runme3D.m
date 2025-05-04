@@ -46,6 +46,7 @@ joint_axes = [
 ];
 
 %% Solve IK for each target point
+tic;
 solutions = cell(1, nPts);
 joint_angles = cell(1, nPts);
 
@@ -63,8 +64,10 @@ for ii = 1:nPts
     solutions{ii} = joint_positions_new;
     joint_angles{ii} = extract_joint_angles(joint_positions_new, joint_axes);
 end
+totalTime = toc;
 
 fprintf('Solved FABRIK for %d target positions!\n', nPts);
+fprintf('Total time: %.3f seconds\n', totalTime);
 
 %% Animate Robot Following the Spiral Path
 figure;
@@ -86,12 +89,25 @@ plot3(path(1,:), path(2,:), path(3,:), 'r--', 'LineWidth', 1.5);
 
 h = plot3(0,0,0,'-o','LineWidth',2,'MarkerSize',6);
 
+% Create video writer
+v = VideoWriter('fabrik_spiral.mp4', 'MPEG-4');
+v.Quality = 100;
+v.FrameRate = 20;
+open(v);
+
 for ii = 1:nPts
     joint_positions = solutions{ii};
     
     set(h, 'XData', joint_positions(:,1), ...
            'YData', joint_positions(:,2), ...
            'ZData', joint_positions(:,3));
+    
     drawnow;
-    pause(0.05); % Faster animation
+    
+    % Write frame to video
+    frame = getframe(gcf);
+    writeVideo(v, frame);
 end
+
+close(v); % Finalize video
+fprintf('Video saved as fabrik_spiral.mp4\n');
