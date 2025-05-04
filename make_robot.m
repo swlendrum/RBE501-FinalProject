@@ -1,12 +1,12 @@
 function robot = make_robot()
-    %MAKE_ROBOT Creates the kinematic structure of the robot used in the exam
+    %   MAKE_ROBOT Creates the kinematic structure of the robot used in the exam
     %   This is a factory function that creates the robot needed for the exam.
     %
     %   Inputs: None
     %   Output: robot - the robot structure, created using Peter Corke's
     %   robotics toolbox
     %
-    %   Author: L. Fichera <lfichera@wpi.edu>
+    %   Author: S. Lendrum <swlendrum@wpi.edu>
     %   Last modified: 4/29/2025
     
     addpath("utils")

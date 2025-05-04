@@ -1,6 +1,4 @@
-%% RBE/ME 501 - Robot Dynamics - Spring 2025
-% Homework 3, Problem 3 - FABRIK Real Robot
-% Instructor: L. Fichera, <loris@wpi.edu>
+%% 3D FABRIK Demo
 
 close all; clear; clc;
 

@@ -1,5 +1,7 @@
 %%   Author: C. Mann <cpmann@wpi.edu>
 %    Last modified: 05/03/2025
+%    Generates data for Newton-Raphson, DLS, and GD IK methods
+%    and visualizes model.
 
 clear; clc; close all;
 
@@ -14,11 +16,13 @@ clear; clc; close all;
 % path = [r .* cos(theta) + center(1);   % X
 %           zeros(1, nPts);                % Y = 0
 %           r .* sin(theta) + center(3)];  % Z
+% plot3(path(1,:), path(2,:), path(3,:), 'b-', 'LineWidth', 1.5);
 
 
 % 2. Generate from .mat file
-path = load('waypoints100k.mat');
+path = load('waypoints.mat');
 path = path.points;
+scatter3(path(1,:), path(2,:), path(3,:), 10, 'filled');
 
 nPts = size(path, 2);
 tol = 1e-6;
@@ -90,7 +94,7 @@ for ii = 1:nPts
     end
     fprintf(repmat('\b',1,nbytes));
     nbytes = fprintf('%0.f%%', ceil(ii/nPts*100));
-    
+
     % Store the positions for plotting
     T01 = M01;
     T12 = fkine(S(:,1), M12, currentQ(1), 'space');
@@ -155,7 +159,7 @@ for ii = 1:nPts
     end
     fprintf(repmat('\b',1,nbytes));
     nbytes = fprintf('%0.f%%', ceil(ii/nPts*100));
-    
+
     % Store the positions for plotting
     T01 = M01;
     T12 = fkine(S(:,1), M12, currentQ(1), 'space');
@@ -219,7 +223,7 @@ for ii = 1:nPts
     end
     fprintf(repmat('\b',1,nbytes));
     nbytes = fprintf('%0.f%%', ceil(ii/nPts*100));
-    
+
     % Store the positions for plotting
     T01 = M01;
     T12 = fkine(S(:,1), M12, currentQ(1), 'space');
@@ -236,55 +240,50 @@ end
 fprintf('\nGradient Descent: %d iterations, average %f iterations\n',iterations, iterations / nPts);
 totalTime = toc;
 fprintf('Total time: %.3f seconds\n', totalTime);
-% %% Show on Robotics Toolbox
-% robot = make_robot();
-% for k=1:nPts
-%     robot.plot(waypoints(:,k)');
-%     pause(0.01)
-% end
-% 
-% %% Plot 1 Result
-% 
-% figure;
-% hold on; grid on; axis equal;
-% xlabel('X (m)'); ylabel('Y (m)'); zlabel('Z (m)');
-% title('Newton-Raphson IK');
-% xlim([-1.2 1.2]);
-% ylim([-1.5 1.5]);
-% zlim([-1.5 1.5]);
-% 
-% % Markers for joints
-% h1 = plot3(NaN, NaN, NaN, 'ro', 'MarkerSize', 8, 'DisplayName', 'Joint 1');
-% h2 = plot3(NaN, NaN, NaN, 'go', 'MarkerSize', 8, 'DisplayName', 'Joint 2');
-% h3 = plot3(NaN, NaN, NaN, 'bo', 'MarkerSize', 8, 'DisplayName', 'Joint 3');
-% hee = plot3(NaN, NaN, NaN, 'ko', 'MarkerSize', 8, 'DisplayName', 'End Effector');
-% 
-% % Line for links
-% h_links = plot3(NaN(1,4), NaN(1,4), NaN(1,4), 'k-', 'LineWidth', 2, 'DisplayName', 'Links');
-% 
-% circle_plot = plot3(circle(1,:), circle(2,:), circle(3,:), 'r--');
-% 
-% view(3)
-% 
-% for k = 1:nPts
-%     % Get positions at current timestep
-%     p1 = positions_1(:, k);
-%     p2 = positions_2(:, k);
-%     p3 = positions_3(:, k);
-%     pee = positions_ee(:, k);
-% 
-%     % Update joint markers
-%     set(h1, 'XData', p1(1), 'YData', p1(2), 'ZData', p1(3));
-%     set(h2, 'XData', p2(1), 'YData', p2(2), 'ZData', p2(3));
-%     set(h3, 'XData', p3(1), 'YData', p3(2), 'ZData', p3(3));
-%     set(hee, 'XData', pee(1), 'YData', pee(2), 'ZData', pee(3));
-% 
-%     % Update link line
-%     x = [p1(1), p2(1), p3(1), pee(1)];
-%     y = [p1(2), p2(2), p3(2), pee(2)];
-%     z = [p1(3), p2(3), p3(3), pee(3)];
-%     set(h_links, 'XData', x, 'YData', y, 'ZData', z);
-% 
-%     drawnow;
-%     pause(0.01); % Adjust for desired animation speed
-% end
+
+%% Show on Robotics Toolbox
+robot = make_robot();
+% Show results
+robot.plot(waypoints', 'movie', 'RBE-501-2025-Project-Output.avi');
+
+%% Joint Positions (stick model)
+hold on; grid on; axis equal;
+xlabel('X (m)'); ylabel('Y (m)'); zlabel('Z (m)');
+title('Joint Positions');
+xlim([-1.2 1.2]);
+ylim([-1.5 1.5]);
+zlim([-1.5 1.5]);
+
+% Markers for joints
+h1 = plot3(NaN, NaN, NaN, 'MarkerSize', 8, 'DisplayName', 'Joint 1');
+h2 = plot3(NaN, NaN, NaN, 'MarkerSize', 8, 'DisplayName', 'Joint 2');
+h3 = plot3(NaN, NaN, NaN, 'MarkerSize', 8, 'DisplayName', 'Joint 3');
+hee = plot3(NaN, NaN, NaN, 'MarkerSize', 8, 'DisplayName', 'End Effector');
+
+% Line for links
+h_links = plot3(NaN(1,4), NaN(1,4), NaN(1,4), 'k-', 'LineWidth', 2, 'DisplayName', 'Links');
+
+view(3)
+
+for k = 1:nPts
+    % Get positions at current timestep
+    p1 = positions_1(:, k);
+    p2 = positions_2(:, k);
+    p3 = positions_3(:, k);
+    pee = positions_ee(:, k);
+
+    % Update joint markers
+    set(h1, 'XData', p1(1), 'YData', p1(2), 'ZData', p1(3));
+    set(h2, 'XData', p2(1), 'YData', p2(2), 'ZData', p2(3));
+    set(h3, 'XData', p3(1), 'YData', p3(2), 'ZData', p3(3));
+    set(hee, 'XData', pee(1), 'YData', pee(2), 'ZData', pee(3));
+
+    % Update link line
+    x = [p1(1), p2(1), p3(1), pee(1)];
+    y = [p1(2), p2(2), p3(2), pee(2)];
+    z = [p1(3), p2(3), p3(3), pee(3)];
+    set(h_links, 'XData', x, 'YData', y, 'ZData', z);
+
+    drawnow;
+    pause(0.01); % Adjust for desired animation speed
+end
